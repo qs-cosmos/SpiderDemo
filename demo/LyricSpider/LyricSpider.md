@@ -6,4 +6,8 @@
 
 ## 架构设计
 
+![](doc/picture/LyricSpiderModel.png)
+
 ## 详细设计
+
+## 运行环境
