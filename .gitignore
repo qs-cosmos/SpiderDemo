@@ -105,4 +105,4 @@ venv.bak/
 
 # extern 
 *.think.md
-*Test.py
+*Test*
