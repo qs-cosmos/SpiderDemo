@@ -1,10 +1,9 @@
 # coding:utf-8
 
 from bs4 import BeautifulSoup
-import abc
-import os
-import codecs
-from downloader import Downloader
+from logger import getLogger, Logger
+from message import MessageQueue
+import os, abc, codecs
 
 '''
 Analyser —— 爬虫解析器
@@ -21,13 +20,18 @@ class Analyser(object):
 
         if not isinstance (parser, Parser):
             raise ValueError('The parser must be a subclass of Parser')
-
+        
+        self.__logger = getLogger(Logger.ANALYSER)
         self.__parser = parser
         self.__database = database
     
     def resolve(self, html):
+        self.__logger.info('...start parsing...')
         result = self.__parser.parse(html)
+        self.__logger.info('....stop parsing...')
+        self.__logger.info('...start exporting...')
         self.__database.write(result)
+        self.__logger.info('....stop exporting...')
 
 '''
 Database 
@@ -55,6 +59,9 @@ class JsonFile(Database):
             os.mkdir(self.__path)
 
     def write(self, data):
+        
+        if data is None:
+            return
 
         if not isinstance(data, dict):
             raise ValueError("The data to JsonFile must be json format!")
@@ -67,7 +74,7 @@ class JsonFile(Database):
         
         title = data['title'].strip()
         
-        paragraph_list = data['content'].encode('utf-8').replace('\r', '').split('\n\n')
+        paragraph_list = data['content'].replace('\r', '').split('\n\n')
         
         toJson = toJsonTemplate.replace('$title',  title)
         paragraphs = ''
@@ -84,7 +91,6 @@ class JsonFile(Database):
 
         with codecs.open(output_path, 'w', 'utf-8') as json_file:
             json_file.write(toJson)
-
 '''
 Parser 
 针对不同的网页内容和需求, 存在不同的解析策略
@@ -124,16 +130,47 @@ class LyricParser(Parser):
     def parse(self, text):
         if self.content_type == 'html':
             soup = BeautifulSoup(text, self.parser)
-            return { 'title':soup.find(id='lyric-title-text').get_text(),\
-                     'content':soup.pre.get_text()}
+            title = soup.find(id='lyric-title-text')
+            content = soup.pre
+            if title is None or content is None:
+                return None
+            return { 'title':title.get_text(),\
+                     'content':content.get_text()}
+
+
+'''
+analyse_scheduler —— 解析器调度程序
+- frequency : 运行频次
+'''
+def analyse_scheduler(frequency, name=0):
+    logger = getLogger(Logger.ANALYSER)
+
+    logger.info('analyse_scheduler %s start.' % (name))
+    queue = MessageQueue()
+    parser = LyricParser()
+    database = JsonFile()
+    analyser = Analyser(parser, database)
+    while frequency:
+        html = None
+        while html is None:
+            html = queue.html
+        logger.info('Analyser %s  start parsing the %dth text.' % (name, frequency))
+        analyser.resolve(html)
+        frequency = frequency - 1
+        logger.info('Analyser %s  stop parsing the %dth text.' % (name, frequency))
+    logger.info('analyse_scheduler %s end.' % (name))
+    queue.clear()
 
 
 if __name__ == '__main__':
-    seed = 'https://www.lyrics.com/lyric/17668372'
-    down = Downloader()
-    html = down.html(seed)
+    '''
+    seed = 'https://www.lyrics.com/lyric/22288147'
+    fish = Fisher()
+    html = fish.fish(seed)
     database = JsonFile()
     parser = LyricParser()
     analyser = Analyser(parser, database)
     analyser.resolve(html)
-
+    '''
+    analyse_scheduler(10)
+    

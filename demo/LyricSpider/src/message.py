@@ -38,6 +38,8 @@ class MessageQueue(object):
         self.__html_redis.rpush(self.__html_list, html)
     
     def exists(self, seed):
+        if seed is None:
+            return False
         return self.__repeat_redis.sismember(self.__repeat_set, seed)
 
     def repeat(self, seed):

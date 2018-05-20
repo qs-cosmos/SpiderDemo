@@ -1,7 +1,8 @@
-#G coding: utf-8
+# coding: utf-8
 import requests
 from configure import ProxyPool
 from configure import UserAgentPool
+from logger import getLogger, Logger
 import codecs
 import time
 
@@ -24,6 +25,7 @@ class Downloader(object):
         self.__max_mask_count = 10
         self.__mask_count = self.__max_mask_count
         self.__config()
+        self.__logger = getLogger(Logger.DOWNLOADER)
 
     def __config(self):
         self.__proxy = self.__proxy_pool.proxy()
@@ -39,6 +41,7 @@ class Downloader(object):
 
     def request(self, seed, allow_redirects=True):
         
+        self.__logger.info('Start requesting %s ' % seed)
         if not isinstance(seed, str):
             raise ValueError("The seed must be a string!")
 
@@ -60,54 +63,28 @@ class Downloader(object):
         retry_count = 5
         while (retry_count) :
             try:
-                return requests.get(seed, proxies=self.__proxies, \
+                time.sleep(1)
+                r =  requests.get(seed, proxies=self.__proxies, \
                         headers=self.__headers, allow_redirects=allow_redirects)
+                self.__logger.info('Request %s successfully.' % seed)
+                return r
 
             except requests.exceptions.RequestException:
                 retry_count  = retry_count - 1
+                self.__logger.warn('The %dth Retry to request %s.' % (retry_count, seed))
 
         self.__proxy_pool.delete(self.__proxy)
         self.__config
         self.__mask_count = self.__max_mask_count
         
         try:
-            time.sleep(2)
-            return requests.get(seed, proxies=self.__proxies, \
+            time.sleep(1)
+            r =  requests.get(seed, proxies=self.__proxies, \
                     headers=self.__headers, allow_redirects=allow_redirects)
+            self.__logger.info('Request %s successfully.' % seed)
+            return r
 
         except requests.exceptions.RequestException:
+            self.__logger.warn('Failed to request %s.' % seed)
             return None
 
-'''
-Fisher —— 网页抓取
-'''
-class Fisher(Downloader):
-
-    def fish(self, seed):
-        r = self.request(seed)
-        if r is None:
-            return None
-        else:
-            return r.text
-
-'''
-Seeder —— 种子下载器
-'''
-class Seeder(Downloader):
-    
-    def __init__(self, seed='https://www.lyrics.com/random.php'):
-        super(Seeder, self).__init__()
-        self.__origin_seed = seed
-
-    def seed(self):
-        
-        r = self.request(self.__origin_seed, False)
-        if r is None:
-            return None
-        else:
-            return r.headers['location']
-        
-
-if __name__ == '__main__':
-    seeder = Seeder()
-    print(seeder.seed())
