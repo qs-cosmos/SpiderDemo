@@ -55,6 +55,7 @@ class JsonFile(Database):
     
     def __init__(self, path='json/'):
         self.__path = path
+        self.__logger = getLogger(Logger.ANALYSER)
         if not os.path.exists(self.__path):
             os.mkdir(self.__path)
 
@@ -65,32 +66,34 @@ class JsonFile(Database):
 
         if not isinstance(data, dict):
             raise ValueError("The data to JsonFile must be json format!")
-        
-        toJsonTemplate ='{\n\t"title": "$title",\n' \
-                        '\t"paragraphs": ['\
-                        '$paragraph'\
-                        '\n]}'
-        paragraphTemplate = '\n\t{"sentences":[\n$sentences\n\t]}'
-        
-        title = data['title'].strip()
-        
-        paragraph_list = data['content'].replace('\r', '').split('\n\n')
-        
-        toJson = toJsonTemplate.replace('$title',  title)
-        paragraphs = ''
-        for paragraph in paragraph_list:
+        try:
+            toJsonTemplate ='{\n\t"title": "$title",\n' \
+                            '\t"paragraphs": ['\
+                            '$paragraph'\
+                            '\n]}'
+            paragraphTemplate = '\n\t{"sentences":[\n$sentences\n\t]}'
             
-            paragraph = '"' + paragraph.replace('\n', '","') + '"'
+            title = data['title'].strip()
+            
+            paragraph_list = data['content'].replace('\r', '').split('\n\n')
+            
+            toJson = toJsonTemplate.replace('$title',  title)
+            paragraphs = ''
+            for paragraph in paragraph_list:
+                
+                paragraph = '"' + paragraph.replace('\n', '","') + '"'
 
-            paragraphs += ',' + paragraphTemplate.replace('$sentences', paragraph)
-        toJson = toJson.replace('$paragraph', paragraphs)
+                paragraphs += ',' + paragraphTemplate.replace('$sentences', paragraph)
+            toJson = toJson.replace('$paragraph', paragraphs)
 
-        output_path = self.__path + title + '.json'
-        if not os.path.exists(output_path) :
-            os.mknod(output_path)
+            output_path = self.__path + title + '.json'
+            if not os.path.exists(output_path) :
+                os.mknod(output_path)
 
-        with codecs.open(output_path, 'w', 'utf-8') as json_file:
-            json_file.write(toJson)
+            with codecs.open(output_path, 'w', 'utf-8') as json_file:
+                json_file.write(toJson)
+        except Exception as e:
+            self.__logger.error('%s' % str(e))
 '''
 Parser 
 针对不同的网页内容和需求, 存在不同的解析策略
@@ -159,7 +162,6 @@ def analyse_scheduler(frequency, name=0):
         frequency = frequency - 1
         logger.info('Analyser %s  stop parsing the %dth text.' % (name, frequency))
     logger.info('analyse_scheduler %s end.' % (name))
-    queue.clear()
 
 
 if __name__ == '__main__':
@@ -172,5 +174,7 @@ if __name__ == '__main__':
     analyser = Analyser(parser, database)
     analyser.resolve(html)
     '''
-    analyse_scheduler(10)
+    queue = MessageQueue()
+    analyse_scheduler(1000)
+    queue.clear()
     

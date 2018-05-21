@@ -9,6 +9,7 @@ class Logger(object):
     FISHER = 'Fisher'
     SEEDER = 'Seeder'
     SCHEDULER = 'Scheduler'
+    PROXY = 'ProxyPool'
 
 def static_logger(**kwargs):
     def decorate(func):

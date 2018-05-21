@@ -1,5 +1,6 @@
 # coding: utf-8
 
+from logger import getLogger, Logger
 import requests
 import random
 import time
@@ -28,6 +29,7 @@ class ProxyPool(object):
         self.__local_headers = {'user-agent': user_agent}
 
     def proxy(self):
+        logger = getLogger(Logger.PROXY)
         url = self.__proxy_pool_host + '/get'
         try:
             time.sleep(self.__sleep_time)
@@ -37,10 +39,14 @@ class ProxyPool(object):
         except  requests.exceptions.ConnectionError as e:
             return self.__default_proxy
         
-        if (proxy == 'no proxy'):
-            return self.__default_proxy
+        re_proxy = r'^\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:\d{1,5}$'
+        if not re.match(re_proxy, proxy):
+            proxy = self.__default_proxy
         else :
-            return 'http://' + proxy
+            proxy = 'http://' + proxy
+        
+        logger.info("Get a new proxy : %s." % proxy)
+        return proxy
 
     def delete(self, proxy):
 

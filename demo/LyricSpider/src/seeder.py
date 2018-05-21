@@ -30,7 +30,6 @@ def seed_scheduler(frequency, name=0):
 
     logger.info('seed_scheduler %s start.' % (name))
     queue = MessageQueue()
-    queue.clear()
     seeder = Seeder()
     while frequency:
         seed = None
@@ -46,4 +45,6 @@ def seed_scheduler(frequency, name=0):
 
 
 if __name__ == '__main__':
+    queue = MessageQueue()
+    queue.clear()
     seed_scheduler(10)

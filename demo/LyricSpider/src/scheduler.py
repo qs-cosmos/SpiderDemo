@@ -17,6 +17,9 @@ def scheduler(amount, frequency=1):
     logger = getLogger(Logger.SCHEDULER)
 
     logger.info('Scheduler start.')
+    queue = MessageQueue()
+    queue.clear()
+
     analyser_pool = Pool()
     fish_pool = Pool()
     seed_pool = Pool()
@@ -33,9 +36,9 @@ def scheduler(amount, frequency=1):
     fish_pool.join()
     seed_pool.join()
     logger.info('Scheduler end.')
-
-if __name__ == '__main__':
-    queue = MessageQueue()
     queue.clear()
 
-    scheduler(2, 3)
+if __name__ == '__main__':
+
+    scheduler(2, 1000)
+
