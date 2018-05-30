@@ -81,9 +81,6 @@ def analyse_scheduler(frequency, name=0):
         logger.info('Analyser %s  stop parsing the %dth text.' % (name, frequency))
     logger.info('analyse_scheduler %s end.' % (name))
 
-
-
-
 '''
 scheduler —— 总调度程序
 - amount : 进程个数

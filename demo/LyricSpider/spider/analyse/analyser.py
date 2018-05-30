@@ -139,6 +139,3 @@ class LyricParser(Parser):
                 return None
             return { 'title':title.get_text(),\
                      'content':content.get_text()}
-
-
-
